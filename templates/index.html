@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consumer</title>
+    <script >
+        document.addEventListener('DOMContentLoaded', () => {
+
+            var interval;
+            //Connect to kafka broker
+            document.querySelector('#connect').addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/connect', {
+                      method: 'GET',
+                      headers: {
+                        'Content-Type': 'application/json'
+                      }
+                    });
+                    if (response.ok) {
+                        alert('Success')
+                        interval = setInterval(async () => {
+                            try {
+                              // Consume from array of messages
+                              const response = await fetch('/consume', {
+                                method: 'GET',
+                                headers: {
+                                  'Content-Type': 'application/json'
+                                }
+                              });
+                              if (response.ok) {
+                                const data = await response.json();
+                                const messages = data.messages;
+                                if(messages.length > 0){
+                                    document.querySelector('#info').innerHTML = 'Messages:'
+                                    const div = document.querySelector('#messages')
+                                    div.innerHTML = ''
+                                    messages.forEach((message) => {
+                                        let p = document.createElement('p')
+                                        p.innerHTML = message
+                                        div.appendChild(p)
+                                      })
+                                }else{
+                                    document.querySelector('#info').innerHTML = 'Subscribed successfully, produce messages to see them here'
+                                }
+                              } else {
+                                alert('3Error, try again');
+                              }
+                            } catch (error) {
+                              console.error(error)
+                              alert('2Error, try again');
+                            }
+                          }, 1000)
+                    } else {
+                      alert('2Error, try again');
+                    }
+                  } catch (error) {
+                    console.error(error)
+                    alert('1Error, try again');
+                  }
+                
+              })
+
+            //Disconnect from kafka broker 
+            document.querySelector('#disconnect').addEventListener('click',async() =>{
+                const response = await fetch('/disconnect', {
+                    method: 'GET',
+                    headers: {
+                    'Content-Type': 'application/json'
+                    }
+                });
+                if (response.ok) {
+                        clearInterval(interval);
+                        alert('Success')
+                        const div = document.querySelector('#messages')
+                        div.innerHTML = ''
+                        document.querySelector('#info').innerHTML = 'Subscribe to start recieving messages'
+                    } else {
+                    alert('Error, try again');
+                    }
+            })
+
+        })
+    </script>
+    <style>
+        body{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            font-family: sans-serif;
+        }
+        button{
+            width: 240px;
+            font-size: 15px;
+            padding: 10px;
+            margin: 10px;
+        }
+        div{
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <button id="connect">Subscribe consumer</button>
+    <button id="disconnect">Unsubscribe consumer</button>
+    <div id="info">Subscribe to start recieving messages</div>
+    <div id="messages"></div>
+</body>
+
+</html>
